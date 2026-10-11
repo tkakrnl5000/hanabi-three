@@ -1,0 +1,14 @@
+export const COLORS = ['red','yellow','green','blue','white'] as const;
+export type Color = typeof COLORS[number];
+export const LABELS: Record<Color,string> = {red:'빨강',yellow:'노랑',green:'초록',blue:'파랑',white:'하양'};
+export const SYMBOLS: Record<Color,string> = {red:'✦',yellow:'☀',green:'❋',blue:'◆',white:'✧'};
+export type Hint = {turn:number;from:number;kind:'color'|'rank';value:Color|number;matched:boolean};
+export type Knowledge = {colors:Color[];ranks:number[];history:Hint[]};
+export type Card = {id:string;color:Color;rank:number;knowledge:Knowledge};
+export type VisibleCard = {id:string;knowledge:Knowledge;color?:Color;rank?:number};
+export type Action = {type:'play'|'discard';cardId:string} | {type:'hint';target:number;kind:'color';value:Color} | {type:'hint';target:number;kind:'rank';value:number};
+export type Log = {turn:number;text:string;kind:'hint'|'play'|'discard'|'system';card?:{color:Color;rank:number}};
+export type Game = {hands:Card[][];deck:Card[];stacks:Record<Color,number>;discards:Card[];tokens:number;strikes:number;turn:number;current:number;finalTurns:number|null;status:'playing'|'ended';reason?:'perfect'|'strikes'|'deck';logs:Log[]};
+export type PlayerView = {name:string;connected:boolean;ready:boolean};
+export type View = {code:string;seat:number;first?:number;revision:number;phase:'lobby'|'playing'|'ended';players:PlayerView[];game?:{hands:VisibleCard[][];stacks:Record<Color,number>;discards:{color:Color;rank:number}[];tokens:number;strikes:number;turn:number;current:number;finalTurns:number|null;deckCount:number;score:number;builtScore:number;reason?:Game['reason'];logs:Log[]}};
+export type Reply = {ok:boolean;error?:string;token?:string;code?:string;seat?:number};
