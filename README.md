@@ -70,3 +70,17 @@ npm run check
 Render가 `PORT`를 지정하며 HTTP와 Socket.IO가 동일 포트를 사용합니다. 별도 프런트 서비스·외부 DB·비밀 환경변수는 필요 없습니다.
 
 **운영 제한:** [Render 무료 서비스](https://render.com/docs/free)는 비활성 시 절전하며 디스크가 영구적이지 않습니다. 일반 재접속은 복구되지만 서비스 교체/재배포/절전으로 파일이 사라지면 방도 사라집니다. 영구 복구가 필요하면 유료 서비스의 persistent disk를 `/var/data`에 마운트하고 `DATA_DIR=/var/data/hanabi`로 지정하세요. 무료로 제공한 설정은 비용을 발생시키는 디스크를 자동 생성하지 않습니다. 진행 중 게임을 유지하려면 재배포 시간을 조절하세요.
+
+## 배포 주소
+
+- 게임: https://hanabi-three.onrender.com
+- 소스: https://github.com/tkakrnl5000/hanabi-three
+- Render 대시보드: https://dashboard.render.com/web/srv-db5eviflk1mc739p2ds0
+
+배포된 주소에서도 같은 3인 E2E를 실행할 수 있습니다:
+
+```sh
+E2E_BASE_URL=https://hanabi-three.onrender.com npm run test:e2e
+```
+
+PowerShell에서는 `$env:E2E_BASE_URL='https://hanabi-three.onrender.com'` 설정 후 `npm run test:e2e`를 실행합니다.

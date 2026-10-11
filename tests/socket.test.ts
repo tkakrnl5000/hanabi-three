@@ -23,3 +23,15 @@ it('3개 연결: 자리 인증, 누출 방지, 중복·위조 거부, 재접속,
  expect(states[0].game!.reason).toBe('strikes');expect((await emit(clients[0],'rematch',null)).ok).toBe(true);await delay();expect(states.map(v=>v.phase)).toEqual(['lobby','lobby','lobby']);for(const c of clients)await emit(c,'ready',true);await delay();expect(states[0].game!.turn).toBe(0);expect(states[0].game!.deckCount).toBe(35);
  }finally{clients.forEach(c=>c.disconnect());await server.close();rmSync(dir,{recursive:true,force:true});}
 });
+
+it('잘못된 Origin은 연결 거절, 서버는 계속 정상 응답',async()=>{
+ const server=createApp();await new Promise<void>(r=>server.http.listen(0,'127.0.0.1',r));const port=(server.http.address() as {port:number}).port;
+ const client=io(`http://127.0.0.1:${port}`,{transports:['websocket'],reconnection:false,extraHeaders:{Origin:'invalid-origin'}});
+ try{await new Promise<void>(r=>client.on('connect_error',()=>r()));expect((await fetch(`http://127.0.0.1:${port}/healthz`)).status).toBe(200);}finally{client.disconnect();await server.close();}
+});
+
+it('모두 준비한 로비에서 마지막 플레이어 재접속 시 자동 시작',async()=>{
+ const server=createApp();await new Promise<void>(r=>server.http.listen(0,'127.0.0.1',r));const port=(server.http.address() as {port:number}).port;const url=`http://127.0.0.1:${port}`;const clients:Socket[]=[];let last:View|undefined;
+ const connect=async()=>{const s=io(url,{transports:['websocket'],reconnection:false});clients.push(s);await new Promise<void>(r=>s.on('connect',r));return s;};
+ try{const a=await connect();a.on('state',v=>last=v);const ra=await emit(a,'join',{name:'하나'});const b=await connect();const rb=await emit(b,'join',{name:'둘',code:ra.code});const c=await connect();await emit(c,'join',{name:'셋',code:ra.code});await emit(a,'first',1);await emit(a,'ready',true);await emit(b,'ready',true);b.disconnect();await delay();await emit(c,'ready',true);await delay();expect(last!.phase).toBe('lobby');const b2=await connect();expect((await emit(b2,'join',{name:'둘',code:ra.code,token:rb.token})).ok).toBe(true);await delay();expect(last!.phase).toBe('playing');expect(last!.game!.current).toBe(1);}finally{clients.forEach(c=>c.disconnect());await server.close();}
+});

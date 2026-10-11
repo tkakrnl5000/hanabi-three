@@ -16,7 +16,7 @@ export function createApp(options:{dataDir?:string;staticDir?:string}={}){
   const app=express(); app.disable('x-powered-by');
   app.use((_req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');res.setHeader('Content-Security-Policy',"default-src 'self'; connect-src 'self' ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self'; frame-ancestors 'none'");next();});
   const http=createServer(app);
-  const io=new Server(http,{maxHttpBufferSize:4096,serveClient:false,allowRequest:(req,done)=>{const origin=req.headers.origin;done(null,!origin||new URL(origin).host===req.headers.host);}});
+  const io=new Server(http,{maxHttpBufferSize:4096,serveClient:false,allowRequest:(req,done)=>{const origin=req.headers.origin;let allowed=!origin;try{if(origin)allowed=new URL(origin).host===req.headers.host;}catch{allowed=false;}done(null,allowed);}});
   const rooms=new Map<string,Room>(); const file=options.dataDir?path.join(options.dataDir,'rooms.json'):undefined;
   if(file){mkdirSync(options.dataDir!,{recursive:true});try{const saved=JSON.parse(readFileSync(file,'utf8')) as Room[];for(const room of saved){room.players.forEach(p=>delete p.socketId);rooms.set(room.code,room);}}catch(e){if((e as NodeJS.ErrnoException).code!=='ENOENT')throw e;}}
   function persist(){if(file){const tmp=file+'.tmp';writeFileSync(tmp,JSON.stringify([...rooms.values()]),{mode:0o600});renameSync(tmp,file);}}
@@ -41,7 +41,7 @@ export function createApp(options:{dataDir?:string;staticDir?:string}={}){
       }else{if(rooms.size>=1000)throw new Error('방이 가득 찼습니다.');const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let code:string;do{code=Array.from({length:6},()=>alphabet[randomInt(alphabet.length)]).join('');}while(rooms.has(code));room={code,players:[{name:input.name,token:randomBytes(32).toString('hex'),ready:false}],revision:0,updated:Date.now()};rooms.set(code,room);seat=0;}
       const p=room.players[seat];const previous=p.socketId;p.socketId=socket.id;identity={code:room.code,seat};
       if(previous&&previous!==socket.id){io.sockets.sockets.get(previous)?.emit('replaced');io.sockets.sockets.get(previous)?.disconnect(true);}
-      publish(room);return {ok:true,token:p.token,code:room.code,seat};
+      if(!room.game&&room.first!==undefined&&room.players.length===3&&room.players.every(p=>p.ready&&p.socketId)){room.game=startGame(room.first);room.revision++;}publish(room);return {ok:true,token:p.token,code:room.code,seat};
     }));
     socket.on('first',safe(data=>{const first=z.number().int().min(0).max(2).parse(data);const {room,seat}=mine();if(seat!==0||room.game||!room.players[first])throw new Error('방장이 로비에서 첫 플레이어를 선택할 수 있습니다.');room.first=first;room.players.forEach(p=>p.ready=false);room.revision++;publish(room);return {ok:true};}));
     socket.on('ready',safe(data=>{const ready=z.boolean().parse(data);const {room,seat}=mine();if(room.game)throw new Error('로비에서만 준비할 수 있습니다.');if(room.first===undefined)throw new Error('방장이 첫 플레이어를 먼저 지정하세요.');room.players[seat].ready=ready;
