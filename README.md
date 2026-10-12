@@ -84,3 +84,7 @@ E2E_BASE_URL=https://hanabi-three.onrender.com npm run test:e2e
 ```
 
 PowerShell에서는 `$env:E2E_BASE_URL='https://hanabi-three.onrender.com'` 설정 후 `npm run test:e2e`를 실행합니다.
+
+## 애니메이션과 효과음
+
+카드 선택·새 카드, 제출 성공/실패, 힌트 전달, 버리기, 5 완성과 최종 결과에 짧은 애니메이션과 서로 다른 효과음이 반응합니다. 효과음은 Web Audio로 직접 합성하며 외부 녹음 파일을 사용하지 않습니다. 화면 상단의 음표 버튼으로 켜고 끌 수 있고 설정은 기기에 저장됩니다. 브라우저의 첫 클릭/키 입력 후에만 소리를 활성화하며, 백그라운드 탭과 재접속 시 지난 턴 소리는 재생하지 않습니다. 운영체제의 모션 감소 설정도 따릅니다.
