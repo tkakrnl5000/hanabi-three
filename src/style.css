@@ -19,3 +19,8 @@
 @media(prefers-reduced-motion:reduce){.sheet-open{animation:none}.card.selected,.card.selected:hover{transform:none}}
 
 .selection-info>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.memory-button{flex-shrink:0}@media(max-width:760px),(max-width:1000px) and (pointer:coarse){.playing-game .own.active-hand{border-top-color:#d9ebaf99}.playing-game .own.active-hand .pill{background:#d9ebaf20;color:#d9ebaf!important}}
+/* Keep scrollable content and feedback above the measured mobile card dock. */
+@media(max-width:760px),(max-width:1000px) and (pointer:coarse){
+ .playing-game{padding-bottom:calc(var(--dock-height,248px) + 24px)}
+ .playing-game .toast{bottom:calc(var(--dock-height,248px) + 12px)}
+}
